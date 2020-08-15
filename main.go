@@ -5,5 +5,6 @@ import (
 )
 
 func main() {
-	fmt.Println(ReverseRunes("!oG ,olleH"))
+	fmt.Println("Hello! World!")
+	fmt.Println("Hoge")
 }
