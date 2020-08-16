@@ -181,3 +181,76 @@ func Test_lexNumber(t *testing.T) {
 		})
 	}
 }
+
+func Test_lexBool(t *testing.T) {
+	type args struct {
+		str []rune
+	}
+	tests := []struct {
+		name     string
+		args     args
+		wantRes  bool
+		wantOk   bool
+		wantRest []rune
+		wantErr  bool
+	}{
+		{
+			name: "true case",
+			args: args{
+				str: []rune("true"),
+			},
+			wantRes:  true,
+			wantOk:   true,
+			wantRest: []rune(""),
+			wantErr:  false,
+		},
+		{
+			name: "false case",
+			args: args{
+				str: []rune("false"),
+			},
+			wantRes:  false,
+			wantOk:   true,
+			wantRest: []rune(""),
+			wantErr:  false,
+		},
+		{
+			name: "not bool case",
+			args: args{
+				str: []rune("\"hoge\""),
+			},
+			wantRes:  false,
+			wantOk:   false,
+			wantRest: []rune("\"hoge\""),
+			wantErr:  false,
+		},
+		{
+			name: "falsee case",
+			args: args{
+				str: []rune("falsee"),
+			},
+			wantRes:  false,
+			wantOk:   true,
+			wantRest: []rune("e"),
+			wantErr:  false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotRes, gotOk, gotRest, err := lexBool(tt.args.str)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("lexBool() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotRes != tt.wantRes {
+				t.Errorf("lexBool() gotRes = %v, want %v", gotRes, tt.wantRes)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("lexBool() gotOk = %v, want %v", gotOk, tt.wantOk)
+			}
+			if !reflect.DeepEqual(gotRest, tt.wantRest) {
+				t.Errorf("lexBool() gotRest = %v, want %v", gotRest, tt.wantRest)
+			}
+		})
+	}
+}
