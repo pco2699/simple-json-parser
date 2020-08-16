@@ -54,15 +54,15 @@ func lexString(str []rune) ([]rune, []rune, error) {
 	return nil, nil, fmt.Errorf("Expected end-of-string quote")
 }
 
-func lexBool(str []rune) (res bool, ok bool, rest []rune, err error) {
+func lexBool(str []rune) (res bool, ok bool, rest []rune) {
 	lenFalse := len("false")
 	lenTrue := len("true")
 	if len(str) >= lenFalse && string(str[:lenFalse]) == "false" {
-		return false, true, str[lenFalse:], nil
+		return false, true, str[lenFalse:]
 	} else if len(str) >= lenTrue && string(str[:lenTrue]) == "true" {
-		return true, true, str[lenTrue:], nil
+		return true, true, str[lenTrue:]
 	} else {
-		return false, false, str, nil
+		return false, false, str
 	}
 }
 

@@ -202,7 +202,6 @@ func Test_lexBool(t *testing.T) {
 			wantRes:  true,
 			wantOk:   true,
 			wantRest: []rune(""),
-			wantErr:  false,
 		},
 		{
 			name: "false case",
@@ -212,7 +211,6 @@ func Test_lexBool(t *testing.T) {
 			wantRes:  false,
 			wantOk:   true,
 			wantRest: []rune(""),
-			wantErr:  false,
 		},
 		{
 			name: "not bool case",
@@ -222,7 +220,6 @@ func Test_lexBool(t *testing.T) {
 			wantRes:  false,
 			wantOk:   false,
 			wantRest: []rune("\"hoge\""),
-			wantErr:  false,
 		},
 		{
 			name: "falsee case",
@@ -232,16 +229,11 @@ func Test_lexBool(t *testing.T) {
 			wantRes:  false,
 			wantOk:   true,
 			wantRest: []rune("e"),
-			wantErr:  false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotRes, gotOk, gotRest, err := lexBool(tt.args.str)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("lexBool() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+			gotRes, gotOk, gotRest := lexBool(tt.args.str)
 			if gotRes != tt.wantRes {
 				t.Errorf("lexBool() gotRes = %v, want %v", gotRes, tt.wantRes)
 			}
