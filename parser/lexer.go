@@ -6,10 +6,12 @@ import (
 )
 
 // Lex : Lexing given string to tokens
-func Lex(str []rune) ([][]rune, error) {
-	var tokens [][]rune
+func Lex(str []rune) ([]interface{}, error) {
+	var tokens []interface{}
 	for len(str) > 0 {
-		jsonStr, _, err := lexString(str)
+		var jsonStr string
+		var err error
+		jsonStr, str, err = lexString(str)
 		if err != nil {
 			return nil, err
 		}
@@ -18,11 +20,43 @@ func Lex(str []rune) ([][]rune, error) {
 			continue
 		}
 
+		var jsonNum interface{}
+		jsonNum, str, err = lexNumber(str)
+		if err != nil {
+			return nil, err
+		}
+		if jsonNum != nil {
+			tokens = append(tokens, jsonNum)
+			continue
+		}
+
+		var jsonBool bool
+		var ok bool
+		jsonBool, ok, str = lexBool(str)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			tokens = append(tokens, jsonBool)
+			continue
+		}
+
+		var jsonNull *interface{}
+		jsonNull, ok, str = lexNull(str)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			tokens = append(tokens, jsonNull)
+			continue
+		}
+
 		char := str[0]
 		if contains(char, jsonWhiteSpace) {
 			str = str[1:]
 		} else if contains(char, jsonSyntax) {
-			tokens = append(tokens, []rune{char})
+			tokens = append(tokens, char)
+			str = str[1:]
 		} else {
 			return nil, fmt.Errorf("Unexpected character: %s", string(char))
 		}
@@ -35,23 +69,23 @@ func contains(word rune, wordMap map[rune]struct{}) bool {
 	return ok
 }
 
-func lexString(str []rune) ([]rune, []rune, error) {
+func lexString(str []rune) (string, []rune, error) {
 	var jsonString []rune
 
 	if str[0] == jsonQuote {
 		str = str[1:]
 	} else {
-		return nil, str, nil
+		return "", str, nil
 	}
 
 	for _, char := range str {
 		if char == jsonQuote {
-			return jsonString, str[len(jsonString)+1:], nil
+			return string(jsonString), str[len(jsonString)+1:], nil
 		}
 		jsonString = append(jsonString, char)
 	}
 
-	return nil, nil, fmt.Errorf("Expected end-of-string quote")
+	return "", nil, fmt.Errorf("Expected end-of-string quote")
 }
 
 func lexBool(str []rune) (res bool, ok bool, rest []rune) {
@@ -66,15 +100,16 @@ func lexBool(str []rune) (res bool, ok bool, rest []rune) {
 	}
 }
 
+func lexNull(str []rune) (res *interface{}, ok bool, rest []rune) {
+	lenNull := len("null")
+	if len(str) >= lenNull && string(str[:lenNull]) == "null" {
+		return nil, true, str[lenNull:]
+	}
+	return nil, false, str
+}
+
 func lexNumber(str []rune) (interface{}, []rune, error) {
 	var jsonNumber []rune
-	var numbers = map[rune]struct{}{}
-	for i := 0; i < 10; i++ {
-		numbers[rune(i+48)] = struct{}{}
-	}
-	numbers['-'] = struct{}{}
-	numbers['e'] = struct{}{}
-	numbers['.'] = struct{}{}
 	isFloat := false
 
 	for _, char := range str {

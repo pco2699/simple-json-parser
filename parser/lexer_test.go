@@ -3,6 +3,8 @@ package parser
 import (
 	"reflect"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestLex(t *testing.T) {
@@ -12,10 +14,41 @@ func TestLex(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    []string
+		want    []interface{}
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "string case",
+			args: args{
+				str: []rune("{\"hoge\": {\"fuga\"}}"),
+			},
+			want:    []interface{}{'{', "hoge", ':', '{', "fuga", '}', '}'},
+			wantErr: false,
+		},
+		{
+			name: "number case",
+			args: args{
+				str: []rune("{\"hoge\" : 10 }"),
+			},
+			want:    []interface{}{'{', "hoge", ':', int32(10), '}'},
+			wantErr: false,
+		},
+		{
+			name: "bool case",
+			args: args{
+				str: []rune("{\"hoge\" : true }"),
+			},
+			want:    []interface{}{'{', "hoge", ':', true, '}'},
+			wantErr: false,
+		},
+		{
+			name: "null case",
+			args: args{
+				str: []rune("{\"hoge\" : null }"),
+			},
+			want:    []interface{}{'{', "hoge", ':', (*interface{})(nil), '}'},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -24,8 +57,8 @@ func TestLex(t *testing.T) {
 				t.Errorf("Lex() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Lex() = %v, want %v", got, tt.want)
+			if diff := cmp.Diff(got, tt.want); diff != "" {
+				t.Errorf("%s", diff)
 			}
 		})
 	}
@@ -59,7 +92,7 @@ func Test_lexString(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    []rune
+		want    string
 		want1   []rune
 		wantErr bool
 	}{
@@ -68,7 +101,7 @@ func Test_lexString(t *testing.T) {
 			args: args{
 				str: []rune("\"hoge\""),
 			},
-			want:    []rune("hoge"),
+			want:    "hoge",
 			want1:   []rune(""),
 			wantErr: false,
 		},
@@ -77,7 +110,7 @@ func Test_lexString(t *testing.T) {
 			args: args{
 				str: []rune("\"hoge\",\"fuga\""),
 			},
-			want:    []rune("hoge"),
+			want:    "hoge",
 			want1:   []rune(",\"fuga\""),
 			wantErr: false,
 		},
@@ -86,7 +119,7 @@ func Test_lexString(t *testing.T) {
 			args: args{
 				str: []rune("1231"),
 			},
-			want:    nil,
+			want:    "",
 			want1:   []rune("1231"),
 			wantErr: false,
 		},
@@ -95,7 +128,7 @@ func Test_lexString(t *testing.T) {
 			args: args{
 				str: []rune("\"hoge"),
 			},
-			want:    nil,
+			want:    "",
 			want1:   nil,
 			wantErr: true,
 		},
@@ -242,6 +275,52 @@ func Test_lexBool(t *testing.T) {
 			}
 			if !reflect.DeepEqual(gotRest, tt.wantRest) {
 				t.Errorf("lexBool() gotRest = %v, want %v", gotRest, tt.wantRest)
+			}
+		})
+	}
+}
+
+func Test_lexNull(t *testing.T) {
+	type args struct {
+		str []rune
+	}
+	tests := []struct {
+		name     string
+		args     args
+		wantRes  *interface{}
+		wantOk   bool
+		wantRest []rune
+	}{
+		{
+			name: "null case",
+			args: args{
+				str: []rune("null"),
+			},
+			wantRes:  nil,
+			wantOk:   true,
+			wantRest: []rune(""),
+		},
+		{
+			name: "not null case",
+			args: args{
+				str: []rune("falsee"),
+			},
+			wantRes:  nil,
+			wantOk:   false,
+			wantRest: []rune("falsee"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotRes, gotOk, gotRest := lexNull(tt.args.str)
+			if !reflect.DeepEqual(gotRes, tt.wantRes) {
+				t.Errorf("lexNull() gotRes = %v, want %v", gotRes, tt.wantRes)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("lexNull() gotOk = %v, want %v", gotOk, tt.wantOk)
+			}
+			if !reflect.DeepEqual(gotRest, tt.wantRest) {
+				t.Errorf("lexNull() gotRest = %v, want %v", gotRest, tt.wantRest)
 			}
 		})
 	}

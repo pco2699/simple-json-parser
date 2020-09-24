@@ -26,3 +26,16 @@ var jsonSyntax = map[rune]struct{}{
 	jsonLeftBracket:  {},
 	jsonRightBracket: {},
 }
+
+var numbers = createNumbers()
+
+func createNumbers() (numbers map[rune]struct{}) {
+	numbers = map[rune]struct{}{}
+	for i := 0; i < 10; i++ {
+		numbers[rune(i+48)] = struct{}{}
+	}
+	numbers['-'] = struct{}{}
+	numbers['e'] = struct{}{}
+	numbers['.'] = struct{}{}
+	return
+}
