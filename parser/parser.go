@@ -1,21 +1,91 @@
 package parser
 
+import (
+	"fmt"
+	"os"
+)
+
 // Parse : Parse tokens
-func Parse(tokens []interface{}) (interface{}, interface{}) {
+func Parse(tokens []interface{}) (interface{}, []interface{}) {
 	t := tokens[0]
 
 	if t == jsonLeftBrace {
-		return parseObject(tokens)
+		var object interface{}
+		var error error
+		object, tokens, error = parseObject(tokens[1:])
+		if error != nil {
+			fmt.Println(error)
+			os.Exit(1)
+		}
+		return object, tokens
+
 	} else if t == jsonLeftBracket {
-		return parseArray(tokens)
+		var array interface{}
+		var error error
+		array, tokens, error = parseArray(tokens[1:])
+		if error != nil {
+			fmt.Println(error)
+			os.Exit(1)
+		}
+		return array, tokens
 	}
-	return nil, tokens
+	return t, tokens
 }
 
-func parseArray(tokens []interface{}) (interface{}, []interface{}) {
-	return nil, tokens
+func parseArray(tokens []interface{}) ([]interface{}, []interface{}, error) {
+	var jsonArray []interface{}
+	t := tokens[0]
+	if t == jsonRightBracket {
+		return jsonArray, tokens[1:], nil
+	}
+
+	for {
+		json, tokens := Parse(tokens)
+
+		jsonArray = append(jsonArray, json)
+
+		if t, ok := tokens[0].(rune); ok {
+			if t == jsonRightBracket {
+				return jsonArray, tokens[1:], nil
+			} else if t != jsonComma {
+				return nil, nil, fmt.Errorf("Expected comma after object in array")
+			} else {
+				tokens = tokens[1:]
+			}
+		}
+	}
 }
 
-func parseObject(tokens []interface{}) (interface{}, []interface{}) {
-	return nil, tokens
+func parseObject(tokens []interface{}) (map[string]interface{}, []interface{}, error) {
+	jsonObject := make(map[string]interface{})
+
+	t := tokens[0]
+	if t == jsonRightBrace {
+		return jsonObject, tokens[1:], nil
+	}
+
+	for {
+		jsonKey := tokens[0]
+		if jsonKeyStr, ok := jsonKey.(string); ok {
+			tokens = tokens[1:]
+			var jsonValue interface{}
+			jsonValue, tokens = Parse(tokens[1:])
+			jsonObject[jsonKeyStr] = jsonValue
+		} else {
+			return nil, nil, fmt.Errorf("Expected string key, got: %v", jsonKey)
+		}
+
+		if tokens[0] != jsonColon {
+			return nil, nil, fmt.Errorf("Expected colon after key in object, got: %v", t)
+		}
+
+		t = tokens[0]
+		if t == jsonRightBrace {
+			return jsonObject, tokens, nil
+		} else if t != jsonComma {
+			return nil, nil, fmt.Errorf("Expected comma after pair in object, got: %v", t)
+		}
+
+		tokens = tokens[1:]
+	}
 }
