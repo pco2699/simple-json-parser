@@ -20,8 +20,10 @@ func TestParse(t *testing.T) {
 			args: args{
 				tokens: []interface{}{'{', "hoge", ':', int32(10), '}'},
 			},
-			want:  []interface{}{"hoge", int32(10)},
-			want1: nil,
+			want: map[string]interface{}{
+				"hoge": int32(10),
+			},
+			want1: make([]interface{}, 0),
 		},
 	}
 	for _, tt := range tests {
@@ -51,9 +53,10 @@ func Test_parseArray(t *testing.T) {
 		{
 			name: "normal case",
 			args: args{
-				tokens: []interface{}{"hoge", int32(10), ']'},
+				tokens: []interface{}{"hoge", ',', int32(10), ']'},
 			},
-			want: []interface{}{"hoge", int32(10)},
+			want:  []interface{}{"hoge", int32(10)},
+			want1: make([]interface{}, 0),
 		},
 	}
 	for _, tt := range tests {

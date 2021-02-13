@@ -29,7 +29,7 @@ func Parse(tokens []interface{}) (interface{}, []interface{}) {
 		}
 		return array, tokens
 	}
-	return t, tokens
+	return t, tokens[1:]
 }
 
 func parseArray(tokens []interface{}) ([]interface{}, []interface{}, error) {
@@ -40,7 +40,8 @@ func parseArray(tokens []interface{}) ([]interface{}, []interface{}, error) {
 	}
 
 	for {
-		json, tokens := Parse(tokens)
+		var json interface{}
+		json, tokens = Parse(tokens)
 
 		jsonArray = append(jsonArray, json)
 
@@ -66,22 +67,24 @@ func parseObject(tokens []interface{}) (map[string]interface{}, []interface{}, e
 
 	for {
 		jsonKey := tokens[0]
-		if jsonKeyStr, ok := jsonKey.(string); ok {
+		if _, ok := jsonKey.(string); ok {
 			tokens = tokens[1:]
-			var jsonValue interface{}
-			jsonValue, tokens = Parse(tokens[1:])
-			jsonObject[jsonKeyStr] = jsonValue
 		} else {
 			return nil, nil, fmt.Errorf("Expected string key, got: %v", jsonKey)
 		}
+		jsonKeyStr := jsonKey.(string)
 
 		if tokens[0] != jsonColon {
 			return nil, nil, fmt.Errorf("Expected colon after key in object, got: %v", t)
 		}
 
+		var jsonValue interface{}
+		jsonValue, tokens = Parse(tokens[1:])
+		jsonObject[jsonKeyStr] = jsonValue
+
 		t = tokens[0]
 		if t == jsonRightBrace {
-			return jsonObject, tokens, nil
+			return jsonObject, tokens[1:], nil
 		} else if t != jsonComma {
 			return nil, nil, fmt.Errorf("Expected comma after pair in object, got: %v", t)
 		}
