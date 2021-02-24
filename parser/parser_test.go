@@ -5,40 +5,6 @@ import (
 	"testing"
 )
 
-func TestParse(t *testing.T) {
-	type args struct {
-		tokens []interface{}
-	}
-	tests := []struct {
-		name  string
-		args  args
-		want  interface{}
-		want1 []interface{}
-	}{
-		{
-			name: "normal case",
-			args: args{
-				tokens: []interface{}{'{', "hoge", ':', int32(10), '}'},
-			},
-			want: map[string]interface{}{
-				"hoge": int32(10),
-			},
-			want1: make([]interface{}, 0),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, got1 := Parse(tt.args.tokens)
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Parse() got = %v, want %v", got, tt.want)
-			}
-			if !reflect.DeepEqual(got1, tt.want1) {
-				t.Errorf("Parse() got1 = %v, want %v", got1, tt.want1)
-			}
-		})
-	}
-}
-
 func Test_parseArray(t *testing.T) {
 	type args struct {
 		tokens []interface{}
@@ -101,6 +67,46 @@ func Test_parseObject(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got1, tt.want1) {
 				t.Errorf("parseObject() got1 = %v, want %v", got1, tt.want1)
+			}
+		})
+	}
+}
+
+func Test_parse(t *testing.T) {
+	type args struct {
+		tokens []interface{}
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    interface{}
+		want1   []interface{}
+		wantErr bool
+	}{
+		{
+			name: "normal case",
+			args: args{
+				tokens: []interface{}{'{', "hoge", ':', int32(10), '}'},
+			},
+			want: map[string]interface{}{
+				"hoge": int32(10),
+			},
+			want1:   make([]interface{}, 0),
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, got1, err := parse(tt.args.tokens)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parse() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("parse() got = %v, want %v", got, tt.want)
+			}
+			if !reflect.DeepEqual(got1, tt.want1) {
+				t.Errorf("parse() got1 = %v, want %v", got1, tt.want1)
 			}
 		})
 	}

@@ -2,11 +2,21 @@ package parser
 
 import (
 	"fmt"
-	"os"
 )
 
-// Parse : Parse tokens
-func Parse(tokens []interface{}) (interface{}, []interface{}) {
+func FromString(str string) (interface{}, error) {
+	tokens, err := Lex(str)
+	if err != nil {
+		return nil, err
+	}
+	result, _, err := parse(tokens)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func parse(tokens []interface{}) (interface{}, []interface{}, error) {
 	t := tokens[0]
 
 	if t == jsonLeftBrace {
@@ -14,22 +24,20 @@ func Parse(tokens []interface{}) (interface{}, []interface{}) {
 		var error error
 		object, tokens, error = parseObject(tokens[1:])
 		if error != nil {
-			fmt.Println(error)
-			os.Exit(1)
+			return nil, nil, error
 		}
-		return object, tokens
+		return object, tokens, nil
 
 	} else if t == jsonLeftBracket {
 		var array interface{}
 		var error error
 		array, tokens, error = parseArray(tokens[1:])
 		if error != nil {
-			fmt.Println(error)
-			os.Exit(1)
+			return nil, nil, error
 		}
-		return array, tokens
+		return array, tokens, nil
 	}
-	return t, tokens[1:]
+	return t, tokens[1:], nil
 }
 
 func parseArray(tokens []interface{}) ([]interface{}, []interface{}, error) {
@@ -41,7 +49,11 @@ func parseArray(tokens []interface{}) ([]interface{}, []interface{}, error) {
 
 	for {
 		var json interface{}
-		json, tokens = Parse(tokens)
+		var err error
+		json, tokens, err = parse(tokens)
+		if err != nil {
+			return nil, nil, err
+		}
 
 		jsonArray = append(jsonArray, json)
 
@@ -79,7 +91,11 @@ func parseObject(tokens []interface{}) (map[string]interface{}, []interface{}, e
 		}
 
 		var jsonValue interface{}
-		jsonValue, tokens = Parse(tokens[1:])
+		var err error
+		jsonValue, tokens, err = parse(tokens[1:])
+		if err != nil {
+			return nil, nil, err
+		}
 		jsonObject[jsonKeyStr] = jsonValue
 
 		t = tokens[0]

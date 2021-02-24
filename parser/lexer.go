@@ -6,7 +6,8 @@ import (
 )
 
 // Lex : Lexing given string to tokens
-func Lex(str []rune) ([]interface{}, error) {
+func Lex(input string) ([]interface{}, error) {
+	str := []rune(input)
 	var tokens []interface{}
 	for len(str) > 0 {
 		var jsonStr string

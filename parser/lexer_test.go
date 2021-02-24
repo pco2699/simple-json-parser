@@ -9,7 +9,7 @@ import (
 
 func TestLex(t *testing.T) {
 	type args struct {
-		str []rune
+		str string
 	}
 	tests := []struct {
 		name    string
@@ -20,7 +20,7 @@ func TestLex(t *testing.T) {
 		{
 			name: "string case",
 			args: args{
-				str: []rune("{\"hoge\": {\"fuga\"}}"),
+				str: "{\"hoge\": {\"fuga\"}}",
 			},
 			want:    []interface{}{'{', "hoge", ':', '{', "fuga", '}', '}'},
 			wantErr: false,
@@ -28,7 +28,7 @@ func TestLex(t *testing.T) {
 		{
 			name: "number case",
 			args: args{
-				str: []rune("{\"hoge\" : 10 }"),
+				str: "{\"hoge\" : 10 }",
 			},
 			want:    []interface{}{'{', "hoge", ':', int32(10), '}'},
 			wantErr: false,
@@ -36,7 +36,7 @@ func TestLex(t *testing.T) {
 		{
 			name: "bool case",
 			args: args{
-				str: []rune("{\"hoge\" : true }"),
+				str: "{\"hoge\" : true }",
 			},
 			want:    []interface{}{'{', "hoge", ':', true, '}'},
 			wantErr: false,
@@ -44,9 +44,17 @@ func TestLex(t *testing.T) {
 		{
 			name: "null case",
 			args: args{
-				str: []rune("{\"hoge\" : null }"),
+				str: "{\"hoge\" : null }",
 			},
 			want:    []interface{}{'{', "hoge", ':', (*interface{})(nil), '}'},
+			wantErr: false,
+		},
+		{
+			name: "array case",
+			args: args{
+				str: "[\"hoge\" , 200 ]",
+			},
+			want:    []interface{}{'[', "hoge", ',', int32(200), ']'},
 			wantErr: false,
 		},
 	}
